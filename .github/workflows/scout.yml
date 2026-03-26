@@ -1,0 +1,40 @@
+name: 🏠 Competitor Scout Semanal
+
+on:
+  schedule:
+    - cron: '0 11 * * 1'   # toda segunda-feira às 08:00 BRT (11:00 UTC)
+  workflow_dispatch:         # permite rodar manualmente pelo GitHub
+
+jobs:
+  scout:
+    name: Raspar e comparar portfólios
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: 🐍 Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 📦 Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: 🔍 Rodar análise competitiva
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GMAIL_USER:        ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          EMAIL_DESTINO:     ${{ secrets.EMAIL_DESTINO }}
+        run: python scout.py
+
+      - name: 📊 Salvar relatório como artefato
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-${{ github.run_number }}
+          path: relatorio.html
+          retention-days: 30
